@@ -5,11 +5,11 @@ import svgwrite.base
 import svgwrite.path
 
 
-def base_get_gcode(self, beam_size=0.1):
+def base_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
     lines = GCodeCollection()
     for element in self.elements:
         if hasattr(element, "get_gcode"):
-            lines.extend(element.get_gcode(beam_size=beam_size))
+            lines.extend(element.get_gcode(beam_size=beam_size, F=F, S=S))
     return lines
 
 
@@ -27,28 +27,28 @@ def _shorten_line(points, beam_size=0.1):
     return points
 
 
-def line_get_gcode(self, beam_size=0.1):
+def line_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
     # TODO: Shorten by beam_size
     points = np.array([
         (self["x1"], self["y1"]), (self["x2"], self["y2"])
     ])
     _shorten_line(points, beam_size=beam_size)
-    return GCodeCollection([GCodeG1(*points)])
+    return GCodeCollection([GCodeG1(*points, S=S, F=F)])
 
 
 svgwrite.shapes.Line.get_gcode = line_get_gcode
 
 
-def polyline_get_gcode(self, beam_size=0.1):
+def polyline_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
     points = self.points.copy()
     _shorten_line(points, beam_size=beam_size)
-    return GCodeCollection([GCodeG1(*points)])
+    return GCodeCollection([GCodeG1(*points, F=F, S=S)])
 
 
 svgwrite.shapes.Polyline.get_gcode = polyline_get_gcode
 
 
-def rect_get_gcode(self, beam_size=0.1):
+def rect_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
     UL = np.array([self["x"], self["y"]])
     size = np.array([self["width"], self["height"]])
     rot = size[0] > size[1]
@@ -70,14 +70,14 @@ def rect_get_gcode(self, beam_size=0.1):
         x = UL[0] + spacing / 2 + i * spacing
         y1 = UL[1] + spacing / 2
         y2 = UL[1] + size[1] - spacing / 2
-        lines.append(GCodeG1(r(x, y1), r(x, y2)))
+        lines.append(GCodeG1(r(x, y1), r(x, y2), S=S, F=F))
     return lines
 
 
 svgwrite.shapes.Rect.get_gcode = rect_get_gcode
 
 
-def path_get_gcode(self, beam_size=0.1):
+def path_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
     """Only supports paths that are essentially polylines."""
     lines = GCodeCollection()
     i = 0
@@ -109,7 +109,7 @@ def path_get_gcode(self, beam_size=0.1):
         else:
             raise NotImplementedError(f"This is an extemely superficial implementation. '{c}' not impemented")
 
-    lines.append(GCodeG1(*cur_points))
+    lines.append(GCodeG1(*cur_points, F=F, S=S))
     return lines
 
 

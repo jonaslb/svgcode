@@ -4,24 +4,32 @@ from copy import copy
 from random import randrange, random
 
 
-def _gto(n, x, y):
-    return f"G{n} X{x:.4f} Y{y:.4f}"
+def _gto(n, x, y, S=None, F=None):
+    s = ""
+    f = ""
+    if S is not None:
+        s = " S{S:2f}".format(S=S)
+    if F is not None:
+        f = " F{F}".format(F=F)
+    return f"G{n} X{x:.4f} Y{y:.4f}" + s + f
 
 
-def _g0to(p):
+def _g0to(p, S=None, F=None):
     x, y = p
-    return _gto(0, x, y)
+    return _gto(0, x, y, S=S, F=F)
 
 
-def _g1to(p):
+def _g1to(p, S=None, F=None):
     x, y = p
-    return _gto(1, x, y)
+    return _gto(1, x, y, S=S, F=F)
 
 
 class GCodeG1():
-    def __init__(self, *points):
+    def __init__(self, *points, F=None, S=None):
         """Points must include the start!"""
         self.points = np.array(points)
+        self.F = F
+        self.S = S
 
     def mutate(self):
         self.points = np.flip(self.points, axis=0)
@@ -38,7 +46,7 @@ class GCodeCollection(list):
                 strings.append(_g0to(start))
             strings.append(pre_line)
             for point in line.points[1:, :]:
-                strings.append(_g1to(point))
+                strings.append(_g1to(point, S=line.S, F=line.F))
             strings.append(post_line)
             p = point
         strings.append(_g0to((0, 0)))
