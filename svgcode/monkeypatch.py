@@ -9,24 +9,40 @@ def base_get_gcode(self, beam_size=0.1):
     lines = GCodeCollection()
     for element in self.elements:
         if hasattr(element, "get_gcode"):
-            lines.extend(element.get_gcode())
+            lines.extend(element.get_gcode(beam_size=beam_size))
     return lines
 
 
 svgwrite.base.BaseElement.get_gcode = base_get_gcode
 
 
+def _shorten_line(points, beam_size=0.1):
+    """Modifies points in-place to shorten the ends by beam_size/2."""
+    v1 = points[0, :] - points[1, :]
+    L = np.linalg.norm(v1)
+    points[0, :] = points[1, :] + v1 * (L - beam_size / 2) / L
+    v2 = points[-1, :] - points[-2, :]
+    L = np.linalg.norm(v2)
+    points[-1] = points[-2, :] + v2 * (L - beam_size / 2) / L
+    return points
+
+
 def line_get_gcode(self, beam_size=0.1):
     # TODO: Shorten by beam_size
-    return GCodeCollection([GCodeG1((self["x1"], self["y1"]), (self["x2"], self["y2"]))])
+    points = np.array([
+        (self["x1"], self["y1"]), (self["x2"], self["y2"])
+    ])
+    _shorten_line(points, beam_size=beam_size)
+    return GCodeCollection([GCodeG1(*points)])
 
 
 svgwrite.shapes.Line.get_gcode = line_get_gcode
 
 
 def polyline_get_gcode(self, beam_size=0.1):
-    # TODO: Shorten by beam_size
-    return GCodeCollection([GCodeG1(*self.points)])
+    points = self.points.copy()
+    _shorten_line(points, beam_size=beam_size)
+    return GCodeCollection([GCodeG1(*points)])
 
 
 svgwrite.shapes.Polyline.get_gcode = polyline_get_gcode
@@ -49,10 +65,8 @@ def rect_get_gcode(self, beam_size=0.1):
         nlines += 1
     spacing = size[0] / nlines
     lines = GCodeCollection()
-    print(nlines)
-    print(type(nlines))
     for i in range(nlines):
-        x = beam_size / 2 + i * spacing
+        x = UL[0] + spacing / 2 + i * spacing
         y1 = UL[1] + spacing / 2
         y2 = UL[1] + size[1] - spacing / 2
         lines.append(GCodeG1(r(x, y1), r(x, y2)))
@@ -67,7 +81,6 @@ def path_get_gcode(self, beam_size=0.1):
     lines = GCodeCollection()
     i = 0
     cur_points = None
-    print(self.commands)
     while True:
         if i >= len(self.commands):
             break
@@ -94,6 +107,7 @@ def path_get_gcode(self, beam_size=0.1):
             i += 3
         else:
             raise NotImplementedError(f"This is an extemely superficial implementation. '{c}' not impemented")
+
     lines.append(GCodeG1(*cur_points))
     return lines
 
