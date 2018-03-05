@@ -65,16 +65,19 @@ class GCodeCollection(list):
         mutated[i1], mutated[i2] = mutated[i2], mutated[i1]
         return mutated
 
-    def optimize(self):
+    def optimize(self, generations=1000, gen_start=20, multiply=5):
+        """Essentially the travelling salesman problem with the added bonus of not having A->B == B->A.
+        It is a todo to make it work well. For now its extremely wasteful and inefficient but at least gives
+        modest improvements."""
         print(f"Pre-mutation: {self.travel_length()}")
         pop = [self]
-        pop += [self.mutate() for _ in range(19)]
-        for iteration in range(1000):
+        pop += [self.mutate() for _ in range(gen_start - 1)]
+        for iteration in range(generations):
             # Multiply
-            new = [c.mutate() for c in pop for _ in range(5)]
+            new = [c.mutate() for c in pop for _ in range(multiply)]
             pop += new
             # Cull
             pop = sorted(pop, key=lambda c: c.travel_length())
-            pop = pop[:20]
+            pop = pop[:gen_start]
         print(f"Post-mutation: {pop[0].travel_length()}")
         return pop[0]

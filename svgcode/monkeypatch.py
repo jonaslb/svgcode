@@ -61,7 +61,8 @@ def rect_get_gcode(self, beam_size=0.1):
         return x, y
     nlines, extra = divmod(size[0], beam_size)
     nlines = int(nlines)
-    if extra > 0:
+    # print(f"The division gave {nlines} lines and {extra} extra")
+    if abs(float(extra)) > 1e-5:
         nlines += 1
     spacing = size[0] / nlines
     lines = GCodeCollection()
