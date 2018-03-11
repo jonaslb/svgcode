@@ -3,6 +3,7 @@ import numpy as np
 import svgwrite.shapes
 import svgwrite.base
 import svgwrite.path
+from math import sqrt
 
 
 def base_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
@@ -75,6 +76,57 @@ def rect_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
 
 
 svgwrite.shapes.Rect.get_gcode = rect_get_gcode
+
+
+def polygon_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
+    """Stripe a Polygon. Striping is in the direction that the polygon is 'stretched'."""
+    points = np.array(self.points)
+    edges = points - np.roll(points, 1, axis=0)
+    # edge_lengths = np.linalg.norm(edges, axis=1)
+    edge_cov = np.cov(edges, rowvar=False)
+    eig, eigv = np.linalg.eigh(edge_cov)
+    # primary_direction = eigv[:, 1]  # Striping direction
+    # secondary_direction = eigv[:, 0]
+    points_b = np.linalg.inv(eigv).dot(points.T).T
+    edges_b = points_b - np.roll(points_b, 1, axis=0)
+    edges_b /= np.linalg.norm(edges_b, axis=1)[:, np.newaxis]  # Normalize the edges (used in margin)
+    min_x = np.min(points_b[:, 0]) + beam_size/2
+    max_x = np.max(points_b[:, 0]) - beam_size/2
+    linepoints = []
+    stripepoints = []
+    isect = 0
+    for x_value in np.arange(min_x, max_x + beam_size*0.1, beam_size):
+        # Find intersections on this stripe
+        for edge, p1, p2 in zip(edges_b, np.roll(points_b, 1, axis=0), points_b):
+            if ((x_value <= p1[0] and x_value > p2[0]) or (x_value <= p2[0] and x_value > p1[0])):
+                yv = edge[1]/edge[0] * (x_value - p1[0]) + p1[1]
+                stripepoints.append([yv, edge])
+                isect += 1
+
+        # Ensure we found an even number of intersections
+        if isect % 2:
+            raise Exception("There ought to be an even number of intersections in each stripe....")
+
+        # Sort the intersections -- ie. they enter, leave, enter, leave, ...
+        stripepoints.sort(key=lambda i: i[0])
+
+        # Add margin perpendicularly to edge
+        for i, val in enumerate(stripepoints):
+            val[0] -= (2*(i%2)-1) * beam_size / 2 / sqrt(1-val[1][1]**2)
+        linepoints.extend([[x_value, yv] for yv, e in stripepoints])
+
+    # Transform back
+    linepoints = np.array(linepoints)
+    linepoints = eigv.dot(linepoints.T).T
+
+    # Make gcode commands
+    cmds = GCodeCollection()
+    for i in range(0, len(linepoints), 2):
+        cmds.append(GCodeG1(linepoints[i], linepoints[i + 1], S=S, F=F))
+    return cmds
+
+
+svgwrite.shapes.Polygon.get_gcode = polygon_get_gcode
 
 
 def path_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
