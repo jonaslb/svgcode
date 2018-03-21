@@ -79,6 +79,7 @@ svgwrite.shapes.Rect.get_gcode = rect_get_gcode
 
 def polygon_get_gcode(self, beam_size=0.1, F=None, S=None):
     """Stripe a Polygon. Striping is in the direction that the polygon is 'stretched'."""
+    # print("POLYGON GCODE DOES NOT WORK WELL RIGHT NOW")
     points = np.array(self.points)
     edges = points - np.roll(points, 1, axis=0)
     # edge_lengths = np.linalg.norm(edges, axis=1)
@@ -96,11 +97,14 @@ def polygon_get_gcode(self, beam_size=0.1, F=None, S=None):
     isect = 0
     for x_value in np.arange(min_x, max_x + beam_size*0.1, beam_size):
         # Find intersections on this stripe
+        stripepoints = []
         for edge, p1, p2 in zip(edges_b, np.roll(points_b, 1, axis=0), points_b):
             if ((x_value <= p1[0] and x_value > p2[0]) or (x_value <= p2[0] and x_value > p1[0])):
                 yv = edge[1]/edge[0] * (x_value - p1[0]) + p1[1]
+                # print(f"Intersection for xv={x_value} between {p1} and {p2} at yv={yv}")
                 stripepoints.append([yv, edge])
                 isect += 1
+        # print("Intersections, xval {:.2f}: {}".format(x_value, stripepoints))
 
         # Ensure we found an even number of intersections
         if isect % 2:
