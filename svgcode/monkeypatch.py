@@ -28,7 +28,6 @@ def _shorten_line(points, beam_size=0.1):
 
 
 def line_get_gcode(self, beam_size=0.1, F=None, S=None):
-    # TODO: Shorten by beam_size
     points = np.array([
         (self["x1"], self["y1"]), (self["x2"], self["y2"])
     ])

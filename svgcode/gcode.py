@@ -75,7 +75,7 @@ class GCodeCollection(list):
 
     def optimize(self, generations=1000, gen_start=20, multiply=5):
         """Essentially the travelling salesman problem with the added bonus of not having A->B == B->A.
-        It is a todo to make it work well. For now its extremely wasteful and inefficient but at least gives
+        It is a todo to make it work well. For now its extremely wasteful and inefficient but gives
         modest improvements."""
         print(f"Pre-mutation: {self.travel_length()}")
         pop = [self]
