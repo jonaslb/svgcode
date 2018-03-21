@@ -8,4 +8,7 @@ setup(name="SVGCode",
       author_email="drixi.b@gmail.com",
       url="",
       packages=["svgcode"],
+      install_requires=[
+           "svgwrite",
+      ],
       )
