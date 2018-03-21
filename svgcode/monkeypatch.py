@@ -5,7 +5,7 @@ import svgwrite.base
 import svgwrite.path
 
 
-def base_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
+def base_get_gcode(self, beam_size=0.1, F=None, S=None):
     lines = GCodeCollection()
     for element in self.elements:
         if hasattr(element, "get_gcode"):
@@ -27,7 +27,7 @@ def _shorten_line(points, beam_size=0.1):
     return points
 
 
-def line_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
+def line_get_gcode(self, beam_size=0.1, F=None, S=None):
     # TODO: Shorten by beam_size
     points = np.array([
         (self["x1"], self["y1"]), (self["x2"], self["y2"])
@@ -39,7 +39,7 @@ def line_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
 svgwrite.shapes.Line.get_gcode = line_get_gcode
 
 
-def polyline_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
+def polyline_get_gcode(self, beam_size=0.1, F=None, S=None):
     points = self.points.copy()
     _shorten_line(points, beam_size=beam_size)
     return GCodeCollection([GCodeG1(*points, F=F, S=S)])
@@ -48,7 +48,7 @@ def polyline_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
 svgwrite.shapes.Polyline.get_gcode = polyline_get_gcode
 
 
-def rect_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
+def rect_get_gcode(self, beam_size=0.1, F=None, S=None):
     UL = np.array([self["x"], self["y"]])
     size = np.array([self["width"], self["height"]])
     rot = size[0] > size[1]
@@ -77,7 +77,7 @@ def rect_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
 svgwrite.shapes.Rect.get_gcode = rect_get_gcode
 
 
-def path_get_gcode(self, beam_size=0.1, F=3000, S=0.5):
+def path_get_gcode(self, beam_size=0.1, F=None, S=None):
     """Only supports paths that are essentially polylines."""
     lines = GCodeCollection()
     i = 0
