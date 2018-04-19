@@ -162,7 +162,7 @@ def path_get_gcode(self, beam_size=0.1, F=None, S=None):
             cur_points += [p]
             i += 3
         else:
-            raise NotImplementedError(f"This is an extemely superficial implementation. '{c}' not impemented")
+            raise NotImplementedError("This is an extemely superficial implementation. '{}' not impemented".format(c))
 
     lines.append(GCodeG1(*cur_points, F=F, S=S))
     return lines

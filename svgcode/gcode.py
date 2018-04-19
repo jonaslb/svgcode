@@ -12,7 +12,7 @@ def _gto(n, x, y, S=None, F=None):
         s = " S{S:2f}".format(S=S)
     if F is not None:
         f = " F{F}".format(F=F)
-    return f"G{n} X{x:.4f} Y{y:.4f}" + s + f
+    return "G{} X{:.4f} Y{:.4f}".format(n, x, y) + s + f
 
 
 def _g0to(p, S=None, F=None):
@@ -97,7 +97,7 @@ class GCodeCollection(list):
         """Essentially the travelling salesman problem with the added bonus of not having A->B == B->A.
         It is a todo to make it work well. For now its extremely wasteful and inefficient but gives
         modest improvements."""
-        print(f"Pre-mutation: {self.travel_length()}")
+        print("Pre-mutation: {}".format(self.travel_length()))
         pop = [self]
         pop += [self.mutate() for _ in range(gen_start - 1)]
         for iteration in range(generations):
@@ -107,5 +107,5 @@ class GCodeCollection(list):
             # Cull
             pop = sorted(pop, key=lambda c: c.travel_length())
             pop = pop[:gen_start]
-        print(f"Post-mutation: {pop[0].travel_length()}")
+        print("Post-mutation: {}".format(pop[0].travel_length()))
         return pop[0]
