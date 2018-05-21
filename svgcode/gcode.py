@@ -44,7 +44,7 @@ class GCodeG1():
         self.points = np.flip(self.points, axis=0)
 
     def gcode_strings(self, pre_line="", post_line=""):
-        strings = [pre_line, _g0to(self.start)]
+        strings = [_g0to(self.start), pre_line]
         for p in self.points[1:, :]:
             strings.append(_g1to(p, S=self.S, F=self.F))
         strings.append(post_line)
